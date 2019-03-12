@@ -1,0 +1,147 @@
+#include <iostream>
+#include <iomanip>
+#include <cstdlib>
+#include <ctime>
+#include <random>
+#include <chrono>
+using namespace std;
+const int qSize = 2;
+int R[qSize][qSize];
+int q_reward[qSize][qSize];
+int currentState;
+void episode(int ini_state);
+void chooseAnAction();
+int getRandomAction();
+void initialize();
+int maximum(int state);
+int reward(int action);
+const double gamma = 0.8;
+const int iterations = 15;
+int ini_states[qSize] = { 0, 1 };
+
+int main() {
+	int v1 = rand() % 100 + 1;
+	int v2 = rand() % 10 + 1;
+	int v3 = rand() % 100 + 1;
+	int v4 = rand() % 10 + 1;
+	int newState;
+	
+	R[0][0] = 5;
+	R[0][1] = 1;
+	R[1][0] = 5;
+	R[1][1] = 1;
+	initialize();
+	//start the learning trials according to the iterations times
+	for (int j = 0; j <= iterations; j++) {
+		for (int i = 0; i <= (qSize - 1); i++) {
+			episode(ini_states[i]);
+		} 
+	} 
+
+	// cout q_reward reward matrix.
+	for (int i = 0; i <= (qSize - 1); i++) {
+		for (int j = 0; j <= (qSize - 1); j++) {
+			cout << setw(2) << q_reward[i][j];
+			if (j < qSize - 1) {
+				cout << ",";
+			}
+		} 
+		cout << endl;
+	} 
+	cout << endl;
+
+	//starting at all initial states one by one.
+	for (int i = 0; i <= (qSize - 1); i++) {
+		currentState = ini_states[i];
+		newState = 0;
+		for (int j = 0; j<20;j++) {
+			newState = maximum(currentState);
+			cout << currentState << ", ";
+			currentState = newState;
+		} 
+	} 
+	int abc;
+	cin >> abc;
+	return 0;
+}
+
+void episode(int ini_state) {
+
+	currentState = ini_state;
+	//do action 10 times
+	for(int j = 0; j < 10; j++){
+		chooseAnAction();
+	} 
+}
+
+int reward(int action) {
+	int value;
+	value = maximum(action);
+	value = q_reward[action][value];
+	return static_cast<int>(R[currentState][action] + (gamma * maximum(action)));
+}
+
+void chooseAnAction() {
+
+	int possibleAction;
+
+	//choose an action with given probability 
+	possibleAction = getRandomAction();
+
+	if (R[currentState][possibleAction] >= 0) {
+		q_reward[currentState][possibleAction] = reward(possibleAction);
+		currentState = possibleAction;
+	}
+}
+
+int getRandomAction() {
+
+	int action;
+	std::random_device rd;  //Will be used to obtain a seed for the random number engine
+	std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+	std::uniform_real_distribution<> dis(0, 1);
+	double val = dis(gen);
+	float a[2];
+	int sum;
+	int target = 10;
+	srand(time(0));
+	a[0] = dis(gen);
+	a[1] = 1 - a[0];
+
+	if (val < a[0] ) {
+		action = 0;
+	}
+	else if (val < 1.0)
+	{
+		action = 1;
+	}
+	//cout << a[0] << endl;
+	// cout << a[1] << endl;
+	return action;
+}
+
+void initialize() {
+
+	srand((unsigned)time(0));
+	for (int i = 0; i <= (qSize - 1); i++) {
+		for (int j = 0; j <= (qSize - 1); j++) {
+			q_reward[i][j] = 0;
+		} 
+	} 
+}
+
+int maximum(int state) {
+
+	int large_action;
+	large_action = qSize - 1;
+	for (int i = 0; i <= (qSize - 1); i++) {
+		if (i != large_action) {     
+			if (q_reward[state][i] > q_reward[state][large_action]) {
+				large_action = i;
+			}
+		}
+	}
+	return large_action;
+
+}
+

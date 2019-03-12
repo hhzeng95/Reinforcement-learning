@@ -1,0 +1,210 @@
+#include <iostream>
+#include <iomanip>
+#include <ctime>
+#include <iostream>
+#include <cstdlib>
+#include <ctime>
+#include <iostream>
+#include <random>
+#include <chrono>
+using namespace std;
+
+const int qSize = 4;
+const double gamma = 0.8;
+const int iterations = 10;
+int initialStates[qSize] = { 0, 1 , 2, 3};
+
+int R[qSize][qSize] = { { 0, 0, 0, 100},
+{ 0, 0,-1, 100},
+{ 0, -1,0, 100 },
+{ -1, 0, 0, 100 }
+
+ };
+
+int Q[qSize][qSize];
+int currentState;
+
+void episode(int initialState);
+void chooseAnAction();
+int getRandomAction();
+void initialize();
+int maximum(int state, bool returnIndexOnly);
+int reward(int action);
+
+int main() {
+
+	int newState;
+
+	initialize();
+
+	//Perform learning trials starting at all initial states.
+	for (int j = 0; j <= (iterations - 1); j++) {
+		for (int i = 0; i <= (qSize - 1); i++) {
+			episode(initialStates[i]);
+		} // i
+	} // j
+
+	  //Print out Q matrix.
+	for (int i = 0; i <= (qSize - 1); i++) {
+		for (int j = 0; j <= (qSize - 1); j++) {
+			cout << setw(4) << Q[i][j];
+			if (j < qSize - 1) {
+				cout << ",";
+			}
+		} // j
+		cout << "\n";
+	} // i
+	cout << "\n";
+
+	//Perform tests, starting at all initial states.
+	for (int i = 0; i <= (qSize - 1); i++) {
+		currentState = initialStates[i];
+		newState = 0;
+		do {
+			newState = maximum(currentState, true);
+			cout << currentState << ", ";
+			currentState = newState;
+		} while (currentState < 3);
+		cout << "3" << endl;
+	} // i
+	int abc;
+	cin >> abc;
+	return 0;
+}
+
+void episode(int initialState) {
+
+	currentState = initialState;
+
+	//Travel from state to state until goal state is reached.
+	do {
+		chooseAnAction();
+	} while (currentState != 3);
+
+	//When currentState = 5, run through the set once more to
+	//for convergence.
+	/*for (int i = 0; i <= (qSize - 1); i++) {
+		chooseAnAction();
+	} // i*/
+}
+
+void chooseAnAction() {
+
+	int possibleAction;
+
+	//Randomly choose a possible action connected to the current state.
+	possibleAction = getRandomAction();
+
+	if (R[currentState][possibleAction] >= 0) {
+		Q[currentState][possibleAction] = reward(possibleAction);
+		currentState = possibleAction;
+	}
+}
+
+int getRandomAction() {
+
+	int action;
+	
+
+	//Randomly choose a possible action connected to the current state.
+	
+	std::random_device rd;  //Will be used to obtain a seed for the random number engine
+	std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+	std::uniform_real_distribution<> dis(0, 1);
+	double val = dis(gen);
+
+
+		float a[4];
+		int sum;
+		int target = 10;
+
+		srand(time(0));
+		do
+		{
+			sum = 0;
+			for (int i = 0; i < 3; i++)
+			{
+				a[i] = rand() % (target + 1);
+				sum += a[i];
+			}
+		} while (sum != target);
+
+
+
+
+		if (val < 0.1) {
+			action = 0;
+		}
+		else if (val < 0.2)
+		{
+			action = 1;
+		}
+		else if (val < 0.96)
+		{
+			action = 2;
+		}
+		else if (val < 1.0 )
+		{
+			action = 3;
+		}
+	
+
+		//action = lowerBound + int(range * rand() / (RAND_MAX + 1.0));
+		/*if (R[currentState][action] > -1) {
+			choiceIsValid = true;
+		}
+	} while (choiceIsValid == false);
+	*/
+	return action;
+}
+
+void initialize() {
+
+	srand((unsigned)time(0));
+
+	for (int i = 0; i <= (qSize - 1); i++) {
+		for (int j = 0; j <= (qSize - 1); j++) {
+			Q[i][j] = 0;
+		} // j
+	} // i
+}
+
+int maximum(int state, bool returnIndexOnly) {
+	// if returnIndexOnly = true, a Q matrix index is returned.
+	// if returnIndexOnly = false, a Q matrix element is returned.
+
+	int winner;
+	bool foundNewWinner;
+	bool done = false;
+
+	winner = 0;
+
+	do {
+		foundNewWinner = false;
+		for (int i = 0; i <= (qSize - 1); i++) {
+			if ((i < winner) || (i > winner)) {     //Avoid self-comparison.
+				if (Q[state][i] > Q[state][winner]) {
+					winner = i;
+					foundNewWinner = true;
+				}
+			}
+		} // i
+
+		if (foundNewWinner == false) {
+			done = true;
+		}
+
+	} while (done = false);
+
+	if (returnIndexOnly == true) {
+		return winner;
+	}
+	else {
+		return Q[state][winner];
+	}
+}
+
+int reward(int action) {
+
+	return static_cast<int>(R[currentState][action] + (gamma * maximum(action, false)));
+}
